@@ -5,18 +5,21 @@
 The requirements have been optimized to remove heavy dependencies. Installation should be much faster now.
 
 ### Option 1: Quick Install (Recommended)
+
 ```bash
 cd backend
 pip install fastapi uvicorn sqlalchemy httpx python-multipart
 ```
 
 ### Option 2: Using requirements.txt
+
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
 ### Run the Server
+
 ```bash
 uvicorn app.main:app --reload
 ```
@@ -34,7 +37,3 @@ The API will be available at `http://localhost:8000`
 - `GET /` - API info
 - `GET /sync` - Sync sample data from Strava (placeholder)
 - `GET /dashboard` - Get dashboard analytics data
-
-
-
-
