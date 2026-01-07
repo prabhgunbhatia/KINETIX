@@ -9,6 +9,7 @@ This guide covers deploying KINETIX to production so others can use it.
 #### Frontend on Vercel (Free Tier Available)
 
 1. **Push to GitHub** (if not already done):
+
 ```bash
 git remote add origin https://github.com/YOUR_USERNAME/kinetix.git
 git push -u origin main
@@ -29,6 +30,7 @@ git push -u origin main
 #### Backend on Railway (Easy) or Render (Free Tier)
 
 **Railway:**
+
 1. Go to [railway.app](https://railway.app)
 2. Sign up with GitHub
 3. Click "New Project" → "Deploy from GitHub repo"
@@ -44,6 +46,7 @@ git push -u origin main
 7. Deploy!
 
 **Render:**
+
 1. Go to [render.com](https://render.com)
 2. Sign up with GitHub
 3. New → Web Service
@@ -59,11 +62,13 @@ git push -u origin main
 
 1. **Get a VPS** (DigitalOcean Droplet, AWS EC2, etc.)
 2. **SSH into server**:
+
 ```bash
 ssh user@your-server-ip
 ```
 
 3. **Install Docker & Docker Compose**:
+
 ```bash
 # Ubuntu/Debian
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -72,23 +77,27 @@ sudo apt-get install docker-compose-plugin
 ```
 
 4. **Clone repository**:
+
 ```bash
 git clone https://github.com/YOUR_USERNAME/kinetix.git
 cd kinetix
 ```
 
 5. **Create .env file**:
+
 ```bash
 cp .env.example .env
 nano .env  # Edit with your values
 ```
 
 6. **Start services**:
+
 ```bash
 docker compose up -d --build
 ```
 
 7. **Set up reverse proxy (Nginx)**:
+
 ```nginx
 server {
     listen 80;
@@ -111,6 +120,7 @@ server {
 ```
 
 8. **Set up SSL with Let's Encrypt**:
+
 ```bash
 sudo apt install certbot python3-certbot-nginx
 sudo certbot --nginx -d your-domain.com
@@ -119,17 +129,20 @@ sudo certbot --nginx -d your-domain.com
 ### Option 3: Fly.io (Full Stack - Free Tier)
 
 1. **Install Fly CLI**:
+
 ```bash
 # Windows (PowerShell)
 iwr https://fly.io/install.ps1 -useb | iex
 ```
 
 2. **Login**:
+
 ```bash
 fly auth login
 ```
 
 3. **Deploy Backend**:
+
 ```bash
 cd backend
 fly launch
@@ -137,6 +150,7 @@ fly launch
 ```
 
 4. **Deploy Frontend**:
+
 ```bash
 cd frontend
 fly launch
@@ -148,6 +162,7 @@ fly launch
 Make sure to set these in your deployment platform:
 
 ### Backend:
+
 - `DATABASE_URL` - PostgreSQL connection string
 - `JWT_SECRET` - Random secret key for JWT tokens
 - `STRAVA_CLIENT_ID` - From Strava API
@@ -156,6 +171,7 @@ Make sure to set these in your deployment platform:
 - `OPENWEATHER_API_KEY` - From OpenWeatherMap
 
 ### Frontend:
+
 - `NEXT_PUBLIC_API_URL` - Your backend API URL (e.g., `https://api.kinetix.com`)
 
 ## Post-Deployment Checklist
@@ -171,6 +187,7 @@ Make sure to set these in your deployment platform:
 ## Quick Deploy Commands
 
 ### Railway (Backend)
+
 ```bash
 railway login
 railway init
@@ -178,6 +195,7 @@ railway up
 ```
 
 ### Vercel (Frontend)
+
 ```bash
 npm i -g vercel
 cd frontend
@@ -187,7 +205,9 @@ vercel
 ## Troubleshooting
 
 ### CORS Issues
+
 Make sure your backend CORS settings include your frontend URL:
+
 ```python
 # In backend/app/main.py
 origins = [
@@ -197,13 +217,15 @@ origins = [
 ```
 
 ### Database Connection
+
 Ensure `DATABASE_URL` is correctly formatted:
+
 ```
 postgresql://user:password@host:port/database
 ```
 
 ### Environment Variables Not Loading
+
 - Check variable names match exactly
 - Restart services after adding variables
 - Use `echo $VARIABLE_NAME` to verify
-

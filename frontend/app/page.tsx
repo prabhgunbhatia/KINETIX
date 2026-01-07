@@ -239,7 +239,6 @@ export default function LandingPage() {
                   className="text-9xl font-black tracking-tighter mb-6"
                   style={{
                     WebkitTextStroke: "1px rgba(255, 255, 255, 0.3)",
-                    textStroke: "1px rgba(255, 255, 255, 0.3)",
                     color: "transparent",
                     background:
                       "linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.4))",

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
-export default function StravaCallback() {
+function StravaCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -68,6 +68,20 @@ export default function StravaCallback() {
         </div>
       </motion.div>
     </div>
+    </ProtectedRoute>
+  );
+}
+
+export default function StravaCallback() {
+  return (
+    <ProtectedRoute>
+      <Suspense fallback={
+        <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+          <Loader2 className="h-12 w-12 text-[#FC6100] animate-spin" />
+        </div>
+      }>
+        <StravaCallbackContent />
+      </Suspense>
     </ProtectedRoute>
   );
 }
