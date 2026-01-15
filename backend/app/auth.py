@@ -13,7 +13,7 @@ import httpx
 import uuid
 
 from app.database import get_db
-from app.models import OAuthToken, User
+from app.models import OAuthToken, User, Activity
 from app.auth_utils import (
     verify_password,
     get_password_hash,
