@@ -34,7 +34,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => onOpenChange(false)}
-            className="fixed inset-0 z-50 bg-transparent"
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
@@ -54,7 +54,11 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 }
 
 export function DialogContent({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={className || "p-5"}>{children}</div>;
+  return (
+    <div className={`bg-slate-900 border border-white/10 rounded-lg shadow-xl ${className || "p-5"}`}>
+      {children}
+    </div>
+  );
 }
 
 export function DialogHeader({ children, className }: { children: React.ReactNode; className?: string }) {

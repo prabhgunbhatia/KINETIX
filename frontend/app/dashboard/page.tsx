@@ -2117,7 +2117,7 @@ function DashboardContent() {
 
           {/* Manual Entry Modal */}
           <Dialog open={manualEntryOpen} onOpenChange={setManualEntryOpen}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md p-6">
               <DialogClose onClose={() => setManualEntryOpen(false)} />
               <DialogHeader>
                 <DialogTitle>Add Manual Run</DialogTitle>
