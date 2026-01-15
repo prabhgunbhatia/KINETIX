@@ -30,6 +30,9 @@ STRAVA_CLIENT_ID = os.getenv("STRAVA_CLIENT_ID", "your_strava_client_id")
 STRAVA_CLIENT_SECRET = os.getenv("STRAVA_CLIENT_SECRET", "your_strava_client_secret")
 STRAVA_REDIRECT_URI = os.getenv("STRAVA_REDIRECT_URI", "http://localhost:8000/auth/strava/callback")
 
+# Frontend URL for OAuth redirects
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 GARMIN_CONSUMER_KEY = os.getenv("GARMIN_CONSUMER_KEY", "your_garmin_key")
 GARMIN_CONSUMER_SECRET = os.getenv("GARMIN_CONSUMER_SECRET", "your_garmin_secret")
 GARMIN_REDIRECT_URI = os.getenv("GARMIN_REDIRECT_URI", "http://localhost:8000/auth/garmin/callback")
@@ -244,7 +247,7 @@ async def strava_callback(code: str, state: Optional[str] = None, db: Session = 
     """
     if not state:
         return RedirectResponse(
-            url="http://localhost:3000/auth/strava/callback?error=missing_user_id"
+            url=f"{FRONTEND_URL}/auth/strava/callback?error=missing_user_id"
         )
     
     # Verify user exists (state contains UUID as string)
@@ -252,13 +255,13 @@ async def strava_callback(code: str, state: Optional[str] = None, db: Session = 
         user_id = uuid.UUID(state)
     except (ValueError, TypeError):
         return RedirectResponse(
-            url="http://localhost:3000/auth/strava/callback?error=invalid_user_id"
+            url=f"{FRONTEND_URL}/auth/strava/callback?error=invalid_user_id"
         )
     
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return RedirectResponse(
-            url="http://localhost:3000/auth/strava/callback?error=user_not_found"
+            url=f"{FRONTEND_URL}/auth/strava/callback?error=user_not_found"
         )
     
     try:
@@ -278,7 +281,7 @@ async def strava_callback(code: str, state: Optional[str] = None, db: Session = 
                 error_detail = token_response.text
                 print(f"Strava token exchange failed: {error_detail}")
                 return RedirectResponse(
-                    url="http://localhost:3000/auth/strava/callback?error=token_exchange_failed"
+                    url=f"{FRONTEND_URL}/auth/strava/callback?error=token_exchange_failed"
                 )
             
             token_data = token_response.json()
@@ -324,7 +327,7 @@ async def strava_callback(code: str, state: Optional[str] = None, db: Session = 
             
             # Redirect to frontend with success
             return RedirectResponse(
-                url="http://localhost:3000/auth/strava/callback?success=true"
+                url=f"{FRONTEND_URL}/auth/strava/callback?success=true"
             )
             
     except Exception as e:
@@ -332,7 +335,7 @@ async def strava_callback(code: str, state: Optional[str] = None, db: Session = 
         import traceback
         traceback.print_exc()
         return RedirectResponse(
-            url=f"http://localhost:3000/auth/strava/callback?error={str(e)}"
+            url=f"{FRONTEND_URL}/auth/strava/callback?error={str(e)}"
         )
 
 
