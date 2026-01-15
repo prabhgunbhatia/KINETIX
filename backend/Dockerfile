@@ -17,12 +17,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Copy and make startup script executable
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Expose port
 EXPOSE 8000
 
 # Default command (can be overridden in docker-compose)
-# Use shell form to expand PORT environment variable
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Use startup script to properly handle PORT variable
+CMD ["/app/start.sh"]
 
 
 
