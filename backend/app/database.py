@@ -14,8 +14,10 @@ DATABASE_URL = os.getenv(
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,  # Verify connections before using
-    pool_size=10,  # Number of connections to maintain
-    max_overflow=20,  # Maximum overflow connections
+    pool_size=5,  # Number of connections to maintain (reduced for Railway)
+    max_overflow=10,  # Maximum overflow connections (reduced for Railway)
+    pool_timeout=30,  # Timeout for getting connection from pool
+    pool_recycle=3600,  # Recycle connections after 1 hour
     echo=False  # Set to True for SQL query logging
 )
 
