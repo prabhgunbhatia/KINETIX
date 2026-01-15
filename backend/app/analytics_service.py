@@ -310,6 +310,54 @@ def get_best_recent_true_effort_pace(db: Session, user_id: str, days: int = 30) 
     return best_pace
 
 
+def get_best_all_time_pace(db: Session, user_id: str) -> float:
+    """
+    Get the best (fastest) True Effort Pace from all activities (all time best).
+    
+    Args:
+        db: Database session
+        user_id: User ID to filter activities
+        
+    Returns:
+        Best pace in seconds per km, or 0 if no data
+    """
+    activities = db.query(Activity).filter(
+        Activity.user_id == user_id,
+        Activity.adjusted_pace.isnot(None),
+        Activity.adjusted_pace > 0
+    ).all()
+    
+    if not activities:
+        return 0.0
+    
+    # Best pace = fastest pace = minimum seconds per km
+    best_pace = min(act.adjusted_pace for act in activities if act.adjusted_pace)
+    return best_pace
+
+
+def get_max_distance_run(db: Session, user_id: str) -> float:
+    """
+    Get the maximum distance the runner has ever run.
+    
+    Args:
+        db: Database session
+        user_id: User ID to filter activities
+        
+    Returns:
+        Maximum distance in km, or 0 if no data
+    """
+    activities = db.query(Activity).filter(
+        Activity.user_id == user_id,
+        Activity.distance > 0
+    ).all()
+    
+    if not activities:
+        return 0.0
+    
+    max_distance_meters = max(act.distance for act in activities)
+    return max_distance_meters / 1000.0  # Convert to km
+
+
 def get_recent_5k_runs(db: Session, user_id: str, days: int = 30, limit: int = 3) -> List[float]:
     """
     Get the most recent 5K runs (within ±500m of 5km) for reality anchoring.
