@@ -36,13 +36,13 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
             onClick={() => onOpenChange(false)}
             className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full flex items-center justify-center bg-transparent"
+              className="relative w-full flex items-center justify-center pointer-events-auto"
             >
               {children}
             </motion.div>
@@ -54,8 +54,12 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 }
 
 export function DialogContent({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  // Extract padding from className if provided, otherwise use default
+  const hasPadding = className.includes("p-");
+  const paddingClass = hasPadding ? "" : "p-5";
+  
   return (
-    <div className={`bg-slate-900 border border-white/10 rounded-lg shadow-xl ${className || "p-5"}`}>
+    <div className={`bg-slate-900 border border-white/10 rounded-lg shadow-xl ${paddingClass} ${className}`}>
       {children}
     </div>
   );
