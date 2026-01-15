@@ -166,6 +166,33 @@ function DashboardContent() {
     }
   };
 
+  const handleDisconnectStrava = async () => {
+    if (!confirm("Are you sure you want to disconnect your Strava account? This will stop automatic activity syncing.")) {
+      return;
+    }
+    
+    try {
+      const response = await apiRequest("/auth/strava/disconnect", {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: "Failed to disconnect Strava" }));
+        throw new Error(error.detail || "Failed to disconnect Strava");
+      }
+      
+      // Update connection status
+      setStravaConnected(false);
+      alert("Strava account disconnected successfully");
+      
+      // Refresh dashboard data
+      await fetchDashboardData();
+    } catch (err) {
+      console.error("Error disconnecting Strava:", err);
+      alert(err instanceof Error ? err.message : "Failed to disconnect Strava");
+    }
+  };
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -787,12 +814,22 @@ function DashboardContent() {
 
                 {stravaConnected && (
                   <>
-                    {/* Connection Status Badge */}
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                      <span className="text-sm text-emerald-400 font-medium">
-                        Strava Connected
-                      </span>
+                    {/* Connection Status Badge with Disconnect */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                        <span className="text-sm text-emerald-400 font-medium">
+                          Strava Connected
+                        </span>
+                      </div>
+                      <Button
+                        onClick={handleDisconnectStrava}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs text-red-400 border-red-400/30 hover:bg-red-400/10 hover:border-red-400/50"
+                      >
+                        Disconnect
+                      </Button>
                     </div>
 
                     {/* Toggle between Strava and Manual */}
