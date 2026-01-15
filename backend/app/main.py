@@ -48,11 +48,19 @@ app = FastAPI(
 
 # CORS middleware for frontend - MUST be added BEFORE routes
 # Allow origins from environment variable or default to localhost
-import os
-import re
 allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
 # Split by comma and strip whitespace from each origin
-allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+# Also fix double https:// if present
+allowed_origins = []
+for origin in allowed_origins_str.split(","):
+    origin = origin.strip()
+    if origin:
+        # Remove duplicate https:// or http:// if present
+        if origin.startswith("https://https://"):
+            origin = origin.replace("https://https://", "https://", 1)
+        elif origin.startswith("http://http://"):
+            origin = origin.replace("http://http://", "http://", 1)
+        allowed_origins.append(origin)
 
 # Also allow all Vercel preview URLs (they follow the pattern: https://project-*-username.vercel.app)
 # This allows preview deployments to work without updating ALLOWED_ORIGINS each time
@@ -79,16 +87,29 @@ def is_allowed_origin(origin: str) -> bool:
             return True
     return False
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origin_regex=r"https://.*\.vercel\.app" if has_vercel_origin else None,
-    allow_origins=allowed_origins if not has_vercel_origin else None,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=3600,
-)
+# Configure CORS middleware
+if has_vercel_origin:
+    # Use regex to allow all Vercel domains (production + preview)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"https://.*\.vercel\.app",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+        max_age=3600,
+    )
+else:
+    # Use explicit origins list
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+        max_age=3600,
+    )
 
 # Create database tables on startup
 @app.on_event("startup")
