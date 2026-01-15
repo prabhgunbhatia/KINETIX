@@ -401,7 +401,7 @@ async def disconnect_strava(
     db: Session = Depends(get_db)
 ):
     """
-    Disconnect Strava account by revoking token and removing from database.
+    Disconnect Strava account by revoking token, removing from database, and deleting all Strava-synced activities.
     """
     try:
         # Find Strava token for this user
@@ -429,69 +429,24 @@ async def disconnect_strava(
             # Continue even if revocation fails (token might already be invalid)
             print(f"Warning: Could not revoke Strava token: {e}")
         
-        # Delete token from database
-        db.delete(strava_token)
-        db.commit()
+        # Delete all activities that were synced from Strava for this user
+        strava_activities = db.query(Activity).filter(
+            Activity.user_id == current_user.id,
+            Activity.source == "strava"
+        ).all()
         
-        return {
-            "message": "Strava account disconnected successfully",
-            "success": True
-        }
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        print(f"Error disconnecting Strava: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error disconnecting Strava: {str(e)}"
-        )
-
-
-@router.delete("/strava/disconnect")
-async def disconnect_strava(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Disconnect Strava account by revoking token and removing from database.
-    """
-    try:
-        # Find Strava token for this user
-        strava_token = db.query(OAuthToken).filter(
-            OAuthToken.provider == "strava",
-            OAuthToken.user_id == current_user.id
-        ).first()
-        
-        if not strava_token:
-            raise HTTPException(
-                status_code=404,
-                detail="Strava account not connected"
-            )
-        
-        # Revoke token with Strava API (best practice)
-        try:
-            async with httpx.AsyncClient() as client:
-                await client.post(
-                    "https://www.strava.com/oauth/deauthorize",
-                    data={
-                        "access_token": strava_token.access_token
-                    }
-                )
-        except Exception as e:
-            # Continue even if revocation fails (token might already be invalid)
-            print(f"Warning: Could not revoke Strava token: {e}")
+        activities_deleted = len(strava_activities)
+        for activity in strava_activities:
+            db.delete(activity)
         
         # Delete token from database
         db.delete(strava_token)
         db.commit()
         
         return {
-            "message": "Strava account disconnected successfully",
-            "success": True
+            "message": f"Strava account disconnected successfully. {activities_deleted} Strava activities removed.",
+            "success": True,
+            "activities_deleted": activities_deleted
         }
     
     except HTTPException:
