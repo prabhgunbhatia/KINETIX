@@ -68,6 +68,12 @@ def create_tables():
 # Include auth router
 app.include_router(auth_router)
 
+# Explicit OPTIONS handler for all routes to ensure CORS preflight works
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    """Handle OPTIONS preflight requests for CORS"""
+    return {"message": "OK"}
+
 @app.get("/")
 async def root():
     """Root endpoint - API health check"""
