@@ -1339,29 +1339,37 @@ async def predict_race(
             total_distance = sum(act.distance / 1000.0 for act in activities)
             avg_training_distance_km = total_distance / len(activities)
         
-        # Apply Riegel's formula for distance scaling if target differs from average training distance
-        if abs(request.target_distance - avg_training_distance_km) > 0.5:  # If difference > 500m
-            # Scale the predicted pace using Riegel's formula
-            # T2 = T1 × (D2/D1)^1.06
-            # For pace: P2 = P1 × (D1/D2)^1.06 (inverse relationship)
-            distance_ratio = request.target_distance / avg_training_distance_km
-            # Pace increases with distance, so we use the inverse
-            pace_scaling_factor = math.pow(1.0 / distance_ratio, 1.06)
-            predicted_pace_per_km = predicted_pace_per_km * pace_scaling_factor
+        # NOTE: Distance scaling and baseline anchoring are now handled in 
+        # predict_race_pace_multivariate_regression, so we don't need to do it again here.
+        # The regression function already:
+        # 1. Scales best pace to target distance with conservative Riegel exponent
+        # 2. Applies distance penalties
+        # 3. Applies fatigue factors
+        # 4. Ensures prediction is not faster than scaled best pace
         
-        # Apply Taper Ceiling AFTER distance scaling to ensure realistic predictions
-        # Account for fitness improvement over time - project best pace improvement
-        if projected_best_pace > 0:
-            # For the target distance, calculate what the projected best pace would be at that distance
-            # Use Riegel to scale the projected best pace to target distance
-            if request.target_distance != 5.0:  # If not 5K, scale the best pace
-                best_pace_at_target = predict_race_time(projected_best_pace, 5.0, request.target_distance) / request.target_distance
+        # Final safety check: Ensure prediction is realistic
+        # Get the best pace scaled to target distance for final validation
+        from app.analytics_service import get_best_all_time_pace, get_max_distance_run
+        best_all_time = get_best_all_time_pace(db, current_user.id)
+        if best_all_time > 0 and request.target_distance != 5.0:
+            # Use conservative scaling
+            if request.target_distance >= 35:
+                riegel_exp = 1.12
+            elif request.target_distance >= 20:
+                riegel_exp = 1.10
+            elif request.target_distance >= 10:
+                riegel_exp = 1.08
             else:
-                best_pace_at_target = projected_best_pace
+                riegel_exp = 1.06
             
-            taper_ceiling = best_pace_at_target * 0.95  # 5% improvement max
-            if predicted_pace_per_km < taper_ceiling:
-                predicted_pace_per_km = taper_ceiling
+            best_time_5k = best_all_time * 5.0
+            best_time_target = best_time_5k * ((request.target_distance / 5.0) ** riegel_exp)
+            best_pace_at_target = best_time_target / request.target_distance
+            
+            # Hard floor: prediction cannot be faster than 98% of scaled best pace
+            minimum_realistic_pace = best_pace_at_target * 0.98
+            if predicted_pace_per_km < minimum_realistic_pace:
+                predicted_pace_per_km = minimum_realistic_pace
         
         # Calculate race time from pace
         momentum_adjusted_time = predicted_pace_per_km * request.target_distance

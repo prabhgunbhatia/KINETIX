@@ -521,19 +521,50 @@ def predict_race_pace_multivariate_regression(
         # Use the better of recent or all-time as the baseline
         baseline_pace = min(best_recent_pace, best_all_time_pace)
         
+        # CRITICAL: Use best pace as the primary anchor, not regression
+        # Scale best all-time pace to target distance using conservative Riegel's formula
+        # For longer distances, use a more conservative exponent (1.10-1.15 instead of 1.06)
+        if baseline_pace > 0:
+            if target_distance_km != 5.0:
+                # Use more conservative exponent for longer distances
+                # For marathon (42km), use 1.12 instead of 1.06
+                # For half marathon (21km), use 1.10
+                # For 10K, use 1.08
+                if target_distance_km >= 35:  # Marathon or longer
+                    riegel_exponent = 1.12
+                elif target_distance_km >= 20:  # Half marathon
+                    riegel_exponent = 1.10
+                elif target_distance_km >= 10:  # 10K
+                    riegel_exponent = 1.08
+                else:  # 5K-10K
+                    riegel_exponent = 1.06
+                
+                # Scale best pace to target distance
+                baseline_time_5k = baseline_pace * 5.0
+                baseline_time_target = baseline_time_5k * ((target_distance_km / 5.0) ** riegel_exponent)
+                baseline_pace_at_target = baseline_time_target / target_distance_km
+            else:
+                baseline_pace_at_target = baseline_pace
+            
+            # The predicted pace CANNOT be faster than the scaled best pace
+            # This is a hard floor, not just a ceiling
+            if predicted_pace < baseline_pace_at_target:
+                predicted_pace = baseline_pace_at_target
+        
         # Apply maximum distance penalty if runner hasn't run close to target distance
         distance_penalty = 1.0
         if max_distance_km > 0:
-            # If target is much longer than max distance run, add penalty
+            # If target is much longer than max distance run, add significant penalty
             if target_distance_km > max_distance_km * 1.2:  # 20% longer than max
-                # Penalty increases with distance gap
                 distance_ratio = target_distance_km / max_distance_km
-                if distance_ratio > 2.0:  # More than 2x their max distance
-                    distance_penalty = 1.15  # 15% slower
+                if distance_ratio > 3.0:  # More than 3x their max distance (e.g., marathon when max is 10K)
+                    distance_penalty = 1.25  # 25% slower - very aggressive
+                elif distance_ratio > 2.0:  # 2x to 3x (e.g., marathon when max is half)
+                    distance_penalty = 1.20  # 20% slower
                 elif distance_ratio > 1.5:  # 1.5x to 2x
-                    distance_penalty = 1.10  # 10% slower
+                    distance_penalty = 1.15  # 15% slower
                 else:  # 1.2x to 1.5x
-                    distance_penalty = 1.05  # 5% slower
+                    distance_penalty = 1.10  # 10% slower
         
         # Apply distance penalty
         predicted_pace = predicted_pace * distance_penalty
@@ -543,27 +574,20 @@ def predict_race_pace_multivariate_regression(
         if projected_chronic_load > 0:
             acwr_ratio = projected_acute_load / projected_chronic_load
             if acwr_ratio > 1.3:  # High fatigue (ACWR > 1.3)
-                fatigue_factor = 1.08  # 8% slower due to fatigue
+                fatigue_factor = 1.10  # 10% slower due to fatigue
             elif acwr_ratio > 1.1:  # Moderate fatigue
-                fatigue_factor = 1.04  # 4% slower
+                fatigue_factor = 1.05  # 5% slower
             elif acwr_ratio < 0.8:  # Low fatigue (well rested)
-                fatigue_factor = 0.98  # 2% faster (well rested)
+                fatigue_factor = 0.99  # 1% faster (well rested) - very conservative
         
         predicted_pace = predicted_pace * fatigue_factor
         
-        # Apply Taper Ceiling: Cap improvement at 5% better than baseline pace
-        # Scale baseline pace to target distance using Riegel's formula
-        if target_distance_km != 5.0 and baseline_pace > 0:
-            # Scale best pace to target distance
-            baseline_time_5k = baseline_pace * 5.0
-            baseline_time_target = baseline_time_5k * ((target_distance_km / 5.0) ** 1.06)
-            baseline_pace_at_target = baseline_time_target / target_distance_km
-        else:
-            baseline_pace_at_target = baseline_pace
-        
-        taper_ceiling = baseline_pace_at_target * 0.95  # 5% improvement max
-        if predicted_pace < taper_ceiling:
-            predicted_pace = taper_ceiling
+        # Final safety check: Ensure prediction is not faster than scaled best pace
+        # Allow only 2% improvement from best pace (very conservative)
+        if baseline_pace_at_target > 0:
+            minimum_pace = baseline_pace_at_target * 0.98  # 2% improvement max
+            if predicted_pace < minimum_pace:
+                predicted_pace = minimum_pace
         
         # Calculate R² score
         y_pred_train = model.predict(X_train_array)
