@@ -34,6 +34,22 @@ from app.garmin_service import (
 
 app = FastAPI(title="KINETIX API", version="1.0.0")
 
+# CORS middleware for frontend - MUST be added BEFORE routes
+# Allow origins from environment variable or default to localhost
+import os
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+# Split by comma and strip whitespace from each origin
+allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+print(f"DEBUG: CORS allowed origins: {allowed_origins}")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
+
 # Create database tables on startup
 @app.on_event("startup")
 def create_tables():
@@ -50,21 +66,6 @@ def create_tables():
 
 # Include auth router
 app.include_router(auth_router)
-
-# CORS middleware for frontend
-# Allow origins from environment variable or default to localhost
-import os
-allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
-# Split by comma and strip whitespace from each origin
-allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
-print(f"DEBUG: CORS allowed origins: {allowed_origins}")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @app.get("/")
 async def root():
