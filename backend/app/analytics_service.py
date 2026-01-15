@@ -351,6 +351,7 @@ def predict_race_pace_multivariate_regression(
     user_id: str,
     projected_chronic_load: float,
     projected_acute_load: float,
+    target_distance_km: float = 5.0,
     days: int = 90
 ) -> tuple[float, float, str]:
     """
@@ -362,6 +363,8 @@ def predict_race_pace_multivariate_regression(
     Includes:
     - Logarithmic transform for pace
     - Recency weighting (recent runs weighted more heavily)
+    - Maximum distance penalty (if never run close to target distance)
+    - Best all-time pace as baseline anchor
     - Taper ceiling (max 5% improvement from best recent pace)
     - Confidence adjustment based on deviation from recent history
     
@@ -370,6 +373,7 @@ def predict_race_pace_multivariate_regression(
         user_id: User ID to filter activities
         projected_chronic_load: Projected Base Fitness (Chronic Load) for race day
         projected_acute_load: Projected Recent Fatigue (Acute Load) for race day
+        target_distance_km: Target race distance in km (default 5.0)
         days: Number of days to look back for training data (default 90)
         
     Returns:
@@ -382,10 +386,18 @@ def predict_race_pace_multivariate_regression(
     if not SKLEARN_AVAILABLE:
         return (0.0, 0.0, "")
     
+    # Get best all-time pace (baseline anchor)
+    best_all_time_pace = get_best_all_time_pace(db, user_id)
+    if best_all_time_pace <= 0:
+        return (0.0, 0.0, "")
+    
     # Get best recent True Effort Pace for taper ceiling
     best_recent_pace = get_best_recent_true_effort_pace(db, user_id, days=30)
     if best_recent_pace <= 0:
         return (0.0, 0.0, "")
+    
+    # Get maximum distance run
+    max_distance_km = get_max_distance_run(db, user_id)
     
     # Get recent 5K runs for reality anchoring
     recent_5k_paces = get_recent_5k_runs(db, user_id, days=30, limit=3)

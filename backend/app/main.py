@@ -1283,6 +1283,7 @@ async def predict_race(
             current_user.id,
             projected_base_fitness,
             projected_acute_load_race_day,
+            target_distance_km=request.target_distance,
             days=90
         )
         
