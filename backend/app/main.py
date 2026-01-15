@@ -54,7 +54,10 @@ app.include_router(auth_router)
 # CORS middleware for frontend
 # Allow origins from environment variable or default to localhost
 import os
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+# Split by comma and strip whitespace from each origin
+allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+print(f"DEBUG: CORS allowed origins: {allowed_origins}")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
