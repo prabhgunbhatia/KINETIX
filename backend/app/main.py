@@ -35,6 +35,7 @@ from app.garmin_service import (
 )
 
 # Disable docs in production (set ENABLE_DOCS=false to hide /docs and /redoc)
+# Note: os is imported at the top of the file
 enable_docs = os.getenv("ENABLE_DOCS", "true").lower() == "true"
 
 app = FastAPI(
