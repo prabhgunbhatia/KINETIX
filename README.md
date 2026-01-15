@@ -56,6 +56,7 @@ environment:
 ```
 
 **`frontend/.env.local`**
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
@@ -74,22 +75,26 @@ docker-compose up --build
 
 ## 📊 Key Features
 
-### Real-Time Training Load Monitoring
+### ⚡ Real-Time Training Load Monitoring
+
 - Automatic TRIMP calculation for every workout
 - Historical load trends with 28-day rolling averages
 - Color-coded intensity zones
 
-### Injury Risk Detection
+### 🎯 Injury Risk Detection
+
 - ACWR-based readiness scoring with visual gauge
 - Real-time warnings when approaching danger zones (ACWR > 1.5)
 - "What-if" scenarios for proposed workouts
 
-### Race Performance Predictions
+### 🏁 Race Performance Predictions
+
 - Multi-distance predictions (5K, 10K, Half Marathon, Marathon)
 - Confidence scores based on training consistency
 - Accounts for fitness growth, fatigue, and distance scaling
 
-### Environmental Adjustments
+### 🌦️ Environmental Adjustments
+
 - Automatic pace normalization for temperature and humidity
 - Fair comparison of performances across different conditions
 
@@ -126,14 +131,31 @@ Interactive API docs available at `/docs`:
 
 ---
 
+## 🚢 Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+
+**Quick Deploy:**
+
+1. **Backend (Railway):** Connect repo, set root to `backend/`, configure env vars
+2. **Frontend (Vercel):** Connect repo, set root to `frontend/`, set `NEXT_PUBLIC_API_URL`
+3. **Database:** Use Railway PostgreSQL or external instance
+
+---
+
 ## 🧪 Testing
 
+**Note:** Test suite is currently being set up. Basic test infrastructure is in place, but comprehensive tests are still in development.
+
 ```bash
-# Backend
-cd backend && pytest tests/ -v --cov=app
+# Backend (requires pytest installation)
+cd backend
+pip install -r requirements.txt  # Installs pytest, pytest-asyncio, pytest-cov
+pytest tests/ -v --cov=app
 
 # Frontend
-cd frontend && npm run test
+cd frontend
+npm run test  # Placeholder - test framework to be configured
 ```
 
 ---
@@ -171,4 +193,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 **Built with ❤️ by athletes, for athletes.**
 
-*"The goal is not to train harder, but to train smarter. Data shows the way."*
+_"The goal is not to train harder, but to train smarter. Data shows the way."_

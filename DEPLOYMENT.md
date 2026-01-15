@@ -237,4 +237,3 @@ postgresql://user:password@host:port/database
 - Check variable names match exactly
 - Restart services after adding variables
 - Use `echo $VARIABLE_NAME` to verify
-

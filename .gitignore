@@ -46,7 +46,16 @@ Thumbs.db
 
 # Database
 *.db
+*.sqlite
+*.sqlite3
 lactate_lift.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
 
 # Logs
 logs/
