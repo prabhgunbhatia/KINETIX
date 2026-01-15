@@ -469,8 +469,51 @@ def predict_race_pace_multivariate_regression(
         predicted_log_pace = model.predict(X_race)[0]
         predicted_pace = math.exp(predicted_log_pace)  # Transform back from log space
         
-        # Apply Taper Ceiling: Cap improvement at 5% better than best recent pace
-        taper_ceiling = best_recent_pace * 0.95  # 5% improvement max
+        # Anchor to best all-time pace: prediction shouldn't be much faster than best
+        # Use the better of recent or all-time as the baseline
+        baseline_pace = min(best_recent_pace, best_all_time_pace)
+        
+        # Apply maximum distance penalty if runner hasn't run close to target distance
+        distance_penalty = 1.0
+        if max_distance_km > 0:
+            # If target is much longer than max distance run, add penalty
+            if target_distance_km > max_distance_km * 1.2:  # 20% longer than max
+                # Penalty increases with distance gap
+                distance_ratio = target_distance_km / max_distance_km
+                if distance_ratio > 2.0:  # More than 2x their max distance
+                    distance_penalty = 1.15  # 15% slower
+                elif distance_ratio > 1.5:  # 1.5x to 2x
+                    distance_penalty = 1.10  # 10% slower
+                else:  # 1.2x to 1.5x
+                    distance_penalty = 1.05  # 5% slower
+        
+        # Apply distance penalty
+        predicted_pace = predicted_pace * distance_penalty
+        
+        # Account for fatigue: if acute load is high relative to chronic, slow down
+        fatigue_factor = 1.0
+        if projected_chronic_load > 0:
+            acwr_ratio = projected_acute_load / projected_chronic_load
+            if acwr_ratio > 1.3:  # High fatigue (ACWR > 1.3)
+                fatigue_factor = 1.08  # 8% slower due to fatigue
+            elif acwr_ratio > 1.1:  # Moderate fatigue
+                fatigue_factor = 1.04  # 4% slower
+            elif acwr_ratio < 0.8:  # Low fatigue (well rested)
+                fatigue_factor = 0.98  # 2% faster (well rested)
+        
+        predicted_pace = predicted_pace * fatigue_factor
+        
+        # Apply Taper Ceiling: Cap improvement at 5% better than baseline pace
+        # Scale baseline pace to target distance using Riegel's formula
+        if target_distance_km != 5.0 and baseline_pace > 0:
+            # Scale best pace to target distance
+            baseline_time_5k = baseline_pace * 5.0
+            baseline_time_target = baseline_time_5k * ((target_distance_km / 5.0) ** 1.06)
+            baseline_pace_at_target = baseline_time_target / target_distance_km
+        else:
+            baseline_pace_at_target = baseline_pace
+        
+        taper_ceiling = baseline_pace_at_target * 0.95  # 5% improvement max
         if predicted_pace < taper_ceiling:
             predicted_pace = taper_ceiling
         
