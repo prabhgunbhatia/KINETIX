@@ -42,7 +42,7 @@ cd KINETIX
 
 ### 2. Environment Setup
 
-Copy `docker-compose.example.yml` to `docker-compose.yml` and configure:
+Copy `docker-compose.yml` and configure:
 
 ```yaml
 environment:
@@ -74,22 +74,22 @@ docker-compose up --build
 
 ## 📊 Key Features
 
-### ⚡ Real-Time Training Load Monitoring
+### Real-Time Training Load Monitoring
 - Automatic TRIMP calculation for every workout
 - Historical load trends with 28-day rolling averages
 - Color-coded intensity zones
 
-### 🎯 Injury Risk Detection
+### Injury Risk Detection
 - ACWR-based readiness scoring with visual gauge
 - Real-time warnings when approaching danger zones (ACWR > 1.5)
 - "What-if" scenarios for proposed workouts
 
-### 🏁 Race Performance Predictions
+### Race Performance Predictions
 - Multi-distance predictions (5K, 10K, Half Marathon, Marathon)
 - Confidence scores based on training consistency
 - Accounts for fitness growth, fatigue, and distance scaling
 
-### 🌦️ Environmental Adjustments
+### Environmental Adjustments
 - Automatic pace normalization for temperature and humidity
 - Fair comparison of performances across different conditions
 
@@ -126,17 +126,6 @@ Interactive API docs available at `/docs`:
 
 ---
 
-## 🚢 Deployment
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
-
-**Quick Deploy:**
-1. **Backend (Railway):** Connect repo, set root to `backend/`, configure env vars
-2. **Frontend (Vercel):** Connect repo, set root to `frontend/`, set `NEXT_PUBLIC_API_URL`
-3. **Database:** Use Railway PostgreSQL or external instance
-
----
-
 ## 🧪 Testing
 
 ```bash
@@ -165,7 +154,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Banister TRIMP Model:** Banister, E.W. (1991)
 - **ACWR Research:** Gabbett, T.J. (2016)
@@ -176,7 +165,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 📧 Contact
 
 - **GitHub Issues:** [Open an issue](https://github.com/prabhgunbhatia/KINETIX/issues)
-- **Email:** [bhatiaprabhgun06@gmail.com](mailto:bhatiaprabhgun06@gmail.com)
+- **Email:** [prabhgunbhatia06@gmail.com](mailto:prabhgunbhatia06@gmail.com)
 
 ---
 
