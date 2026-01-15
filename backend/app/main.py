@@ -32,18 +32,54 @@ from app.garmin_service import (
     convert_garmin_activity_to_db_format
 )
 
-app = FastAPI(title="KINETIX API", version="1.0.0")
+# Disable docs in production (set ENABLE_DOCS=false to hide /docs and /redoc)
+enable_docs = os.getenv("ENABLE_DOCS", "true").lower() == "true"
+
+app = FastAPI(
+    title="KINETIX API", 
+    version="1.0.0",
+    docs_url="/docs" if enable_docs else None,
+    redoc_url="/redoc" if enable_docs else None,
+    openapi_url="/openapi.json" if enable_docs else None,
+)
 
 # CORS middleware for frontend - MUST be added BEFORE routes
 # Allow origins from environment variable or default to localhost
 import os
+import re
 allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
 # Split by comma and strip whitespace from each origin
 allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+
+# Also allow all Vercel preview URLs (they follow the pattern: https://project-*-username.vercel.app)
+# This allows preview deployments to work without updating ALLOWED_ORIGINS each time
+vercel_pattern = re.compile(r'^https://[a-z0-9-]+-[a-z0-9]+-[a-z0-9]+\.vercel\.app$')
+vercel_production_pattern = re.compile(r'^https://[a-z0-9-]+\.vercel\.app$')
+
+# Check if any of the allowed origins is a Vercel domain
+has_vercel_origin = any(
+    vercel_pattern.match(origin) or vercel_production_pattern.match(origin) 
+    for origin in allowed_origins
+)
+
 print(f"DEBUG: CORS allowed origins: {allowed_origins}")
+if has_vercel_origin:
+    print("DEBUG: Vercel domain detected - allowing all Vercel preview URLs")
+# Custom CORS origin validator to allow Vercel preview URLs
+def is_allowed_origin(origin: str) -> bool:
+    # Check exact matches first
+    if origin in allowed_origins:
+        return True
+    # If we have a Vercel origin, allow all Vercel preview URLs
+    if has_vercel_origin:
+        if vercel_pattern.match(origin) or vercel_production_pattern.match(origin):
+            return True
+    return False
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app" if has_vercel_origin else None,
+    allow_origins=allowed_origins if not has_vercel_origin else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
